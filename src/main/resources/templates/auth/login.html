@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Data Entry: Auth</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+</head>
+<body>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script>
+function loadDoc(event) {
+    console.log(event);
+    var phoneNum = document.getElementById("phoneNumberInput").value;
+    document.getElementById("phoneNumberInput").readOnly=true;
+      const xhttp = new XMLHttpRequest();
+      xhttp.onload = function() {
+        if(this.responseText.indexOf("Success") != -1) {
+            document.getElementById("otpInput").readOnly=false;
+            document.getElementById("phoneNumberInput").readOnly=true;
+            document.getElementById("alert-message").innerHTML=this.responseText;
+        } else {
+            document.getElementById("phoneNumberInput").readOnly=false;
+            document.getElementById("otpInput").readOnly=true;
+        }
+        console.log(this.responseText);
+      }
+    xhttp.open("POST", "/login/gen");
+    xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    const phoneObj = "phoneNumber="+phoneNum
+    xhttp.send(phoneObj);
+}
+</script>
+<div class="jumbotron jumbotron-fluid">
+    <div class="container">
+        <h1 class="display-4">Assessment Portal</h1>
+        <p class="lead">A simple solution to submit assessment.</p>
+    </div>
+</div>
+
+<div class="row m-0">
+    <div class="col-md-4"></div>
+    <div class="col-md-4">
+        <form action="#" th:action="@{/otp/login}" method="post" th:object="${phone}">
+            <div class="form-group">
+                <label for="phoneNumberInput">Phone Number</label>
+                <input type="text" th:field="*{phoneNumber}" class="form-control" id="phoneNumberInput" aria-describedby="emailHelp" placeholder="Phone Number" th:readonly="*{phoneNumber != null}">
+                <span th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}"></span>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group" th:if="*{phoneNumber == null}">
+                        <label for="otpInput">OTP</label>
+                        <input type="password" th:field="*{otp}" class="form-control" id="otpInput" placeholder="OTP" th:readonly="*{phoneNumber == null}">
+                        <span th:if="${#fields.hasErrors('otp')}" th:errors="*{otp}"></span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <br>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="loadDoc(event)">Gen OTP</button>
+                </div>
+                <div class="col-md-6"></div>
+            </div>
+            <div id="alert-message"></div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    </div>
+    <div class="col-md-4"></div>
+</div>
+
+</body>
+</html>
