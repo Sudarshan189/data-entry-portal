@@ -15,7 +15,7 @@ import javax.validation.constraints.Size;
 @Getter
 @Setter
 @Accessors(chain = true)
-@ToString
+@ToString(exclude = {"otp"})
 public class PhoneDto {
     @NotNull(message = "Phone should not be null")
     @NotEmpty(message = "Phone should not be null")

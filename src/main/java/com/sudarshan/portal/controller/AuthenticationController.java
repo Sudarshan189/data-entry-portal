@@ -59,4 +59,39 @@ public class AuthenticationController {
             return "status/error-page";
         }
     }
+
+    @PostMapping("/phone")
+    public String submitPhone(@ModelAttribute @Valid PhoneDto phone, BindingResult bindingResult, Model model) {
+        log.info("submitPhone: Phone submission {}", phone);
+        if (bindingResult.hasErrors()) {
+            List<FieldError> fieldErrors = bindingResult.getFieldErrors();
+            var builder = new StringBuilder();
+            fieldErrors.forEach(fieldError -> builder.append(fieldError.getDefaultMessage()));
+            model.addAttribute("message", builder.toString());
+            return "status/error-page";
+        }
+        log.info("submitPhone: forwarding the request for {}", phone);
+        model.addAttribute("phone", phone);
+        return "forward:/login/genotp";
+    }
+
+    // forward request
+    @PostMapping("/genotp")
+    public String generateOtp(@ModelAttribute @Valid PhoneDto phone, Model model) {
+        log.info("generateOtp: {}", phone);
+        model.addAttribute("phone", phone);
+
+        try {
+            phone = authenticationService.generateOtp(phone);
+            model.addAttribute("message", "OTP Sent to " + phone.getPhoneNumber());
+            return "status/success-page";
+        } catch (OtpException ex) {
+            model.addAttribute("message", ex.getLocalizedMessage());
+            return "status/error-page";
+        } catch (Exception ex) {
+            log.error(ex.getMessage());
+            model.addAttribute("message", "Something went wrong");
+            return "status/error-page";
+        }
+    }
 }

@@ -23,7 +23,8 @@
             <a class="nav-item nav-link" href="/user/new-assessment">New</a>
         </div>
     </div>
-    <a class="navbar-text" th:text="${session.username}" href="/logout"></a>
+    <span class="navbar-text" th:text="${session.username}"></span>
+    <a class="navbar-text" href="/logout">&nbsp;|&nbsp;Logout</a>
 </nav>
 
 <div class="jumbotron jumbotron-fluid">
