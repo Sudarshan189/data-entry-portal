@@ -1,34 +1,62 @@
 package com.sudarshan.portal.controller;
 
 import com.sudarshan.portal.dto.PhoneDto;
+import com.sudarshan.portal.exception.OtpException;
 import com.sudarshan.portal.service.AuthenticationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
+import javax.validation.Valid;
+import java.util.List;
+
+/**
+ * Created By Sudarshan Shanbhag
+ */
 
 @Slf4j
 @Controller
+@RequestMapping("/login")
 public class AuthenticationController {
 
     @Autowired
     private AuthenticationService authenticationService;
 
-    @GetMapping("/login")
+    @GetMapping()
     public String loginPage(Model model) {
         log.debug("loginPage: Setting blank Phone Dto");
         model.addAttribute("phone", new PhoneDto());
-        return "auth/login";
+        return "auth/login-page";
     }
 
-    @PostMapping("/login/gen")
-    public String genOtp(@ModelAttribute PhoneDto phone) {
+    @PostMapping("/gen")
+    public String genOtp(@ModelAttribute @Valid PhoneDto phone, BindingResult result, Model model) {
         log.info("genOtp: generating otp");
-        authenticationService.generateOtp(phone);
-        return "status/success-page";
+        if (result.hasErrors()) {
+            List<FieldError> fieldErrors = result.getFieldErrors();
+            var builder = new StringBuilder();
+            fieldErrors.forEach(fieldError -> builder.append(fieldError.getDefaultMessage()));
+            model.addAttribute("message", builder.toString());
+            return "status/error-page";
+        }
+        try {
+            phone = authenticationService.generateOtp(phone);
+            model.addAttribute("message", "OTP Sent to " + phone.getPhoneNumber());
+            return "status/success-page";
+        } catch (OtpException ex) {
+            model.addAttribute("message", ex.getLocalizedMessage());
+            return "status/error-page";
+        } catch (Exception ex) {
+            log.error(ex.getMessage());
+            model.addAttribute("message", "Something went wrong");
+            return "status/error-page";
+        }
     }
 }

@@ -1,6 +1,6 @@
 package com.sudarshan.portal.config;
 
-import com.sudarshan.portal.filter.AuthFilter;
+import com.sudarshan.portal.filter.CustomUsernamePasswordAuthFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +12,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+/**
+ * Created By Sudarshan Shanbhag
+ */
 @EnableWebSecurity
 @Configuration
 public class SecurityCustomConfig extends WebSecurityConfigurerAdapter {
@@ -27,15 +30,17 @@ public class SecurityCustomConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.cors().and().csrf().disable()
-                .addFilter(new AuthFilter(this.authenticationManager()))
+                .addFilter(new CustomUsernamePasswordAuthFilter(this.authenticationManager()))
                 .authorizeRequests()
                 .antMatchers("/login/**").permitAll()
-                .antMatchers("/", "/user/**").hasRole("USER")
+                .antMatchers("/", "/user/**").hasAnyRole("USER", "ADMIN")
+                .antMatchers("/admin/**", "/h2-console/**").hasAnyRole("ADMIN")
                 .anyRequest().authenticated()
                 .and()
                 .formLogin().loginPage("/login").loginProcessingUrl("/otp/login").defaultSuccessUrl("/", true)
                 .and()
                 .sessionManagement().maximumSessions(1);
+        http.headers().frameOptions().sameOrigin();
     }
 
     @Bean

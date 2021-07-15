@@ -18,10 +18,10 @@ function loadDoc(event) {
     document.getElementById("phoneNumberInput").readOnly=true;
       const xhttp = new XMLHttpRequest();
       xhttp.onload = function() {
+        document.getElementById("alert-message").innerHTML=this.responseText;
         if(this.responseText.indexOf("Success") != -1) {
             document.getElementById("otpInput").readOnly=false;
             document.getElementById("phoneNumberInput").readOnly=true;
-            document.getElementById("alert-message").innerHTML=this.responseText;
         } else {
             document.getElementById("phoneNumberInput").readOnly=false;
             document.getElementById("otpInput").readOnly=true;
@@ -54,7 +54,7 @@ function loadDoc(event) {
                 <div class="col-md-3">
                     <div class="form-group" th:if="*{phoneNumber == null}">
                         <label for="otpInput">OTP</label>
-                        <input type="password" th:field="*{otp}" class="form-control" id="otpInput" placeholder="OTP" th:readonly="*{phoneNumber == null}">
+                        <input type="password" th:field="*{otp}" class="form-control" id="otpInput" placeholder="OTP">
                         <span th:if="${#fields.hasErrors('otp')}" th:errors="*{otp}"></span>
                     </div>
                 </div>
@@ -66,6 +66,10 @@ function loadDoc(event) {
             </div>
             <div id="alert-message"></div>
             <button type="submit" class="btn btn-primary">Submit</button>
+            <div class="error" th:if="${param.error}"
+                 th:with="errorMsg=${session['SPRING_SECURITY_LAST_EXCEPTION'].message}">
+                Reason: <span th:text="${errorMsg}">Wrong input!</span>
+            </div>
         </form>
     </div>
     <div class="col-md-4"></div>

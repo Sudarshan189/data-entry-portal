@@ -1,10 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Failed</title>
-</head>
+<html xmlns:th="http://www.thymeleaf.org">
 <body>
-  
+    <div class="alert alert-danger" role="alert">
+         Error: <span th:text="${message}"></span>
+    </div>
 </body>
 </html>

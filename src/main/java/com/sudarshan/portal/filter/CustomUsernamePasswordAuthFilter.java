@@ -1,27 +1,32 @@
 package com.sudarshan.portal.filter;
 
-import com.sudarshan.portal.model.User;
+import com.sudarshan.portal.domain.model.User;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.web.DefaultRedirectStrategy;
-import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.ui.Model;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Enumeration;
 
+/**
+ * Created By Sudarshan Shanbhag
+ */
 @Slf4j
-public class AuthFilter extends UsernamePasswordAuthenticationFilter {
+public class CustomUsernamePasswordAuthFilter extends UsernamePasswordAuthenticationFilter {
 
-    public AuthFilter(AuthenticationManager authenticationManager) {
+    @Autowired
+    private Model model;
+
+    public CustomUsernamePasswordAuthFilter(AuthenticationManager authenticationManager) {
         setAuthenticationManager(authenticationManager);
         setFilterProcessesUrl("/otp/login");
     }
@@ -32,10 +37,11 @@ public class AuthFilter extends UsernamePasswordAuthenticationFilter {
         String password = obtainPassword(request);
         if (userName!=null && password!=null) {
             log.info("attemptAuthentication: attempting Login for {}", userName);
-            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userName, password);
+            var authenticationToken = new UsernamePasswordAuthenticationToken(userName, password);
             setDetails(request, authenticationToken);
             return this.getAuthenticationManager().authenticate(authenticationToken);
         } else {
+            log.info("attemptAuthentication: Bad Creds {} {}",userName,password);
             throw new AuthenticationServiceException("Bad Credentials");
         }
     }
@@ -52,7 +58,7 @@ public class AuthFilter extends UsernamePasswordAuthenticationFilter {
     @Override
     protected String obtainUsername(HttpServletRequest request) {
         String phoneNumber = request.getParameter("phoneNumber");
-        if (phoneNumber!=null && !phoneNumber.isEmpty()) {
+        if (phoneNumber != null && phoneNumber.length() == 10) {
             return phoneNumber;
         }
         return null;

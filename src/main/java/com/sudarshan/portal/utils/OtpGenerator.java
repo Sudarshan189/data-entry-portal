@@ -2,7 +2,13 @@ package com.sudarshan.portal.utils;
 
 import java.util.Random;
 
+/**
+ * Created By Sudarshan Shanbhag
+ */
 public class OtpGenerator {
+
+    private OtpGenerator() {
+    }
 
     public static final Random random = new Random();
 
