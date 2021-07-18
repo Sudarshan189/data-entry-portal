@@ -42,7 +42,7 @@ public class CustomUsernamePasswordAuthFilter extends UsernamePasswordAuthentica
             return this.getAuthenticationManager().authenticate(authenticationToken);
         } else {
             log.info("attemptAuthentication: Bad Creds {} {}",userName,password);
-            throw new AuthenticationServiceException("Bad Credentials");
+            throw new AuthenticationServiceException("Invalid OTP or PhoneNumber submitted");
         }
     }
 
@@ -74,7 +74,7 @@ public class CustomUsernamePasswordAuthFilter extends UsernamePasswordAuthentica
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
         log.info("Un Successful: {}", failed.getLocalizedMessage());
-        log.info("Un Successful: {}", failed.getMessage());
-        super.unsuccessfulAuthentication(request, response, failed);
+        request.setAttribute("failed", failed.getLocalizedMessage());
+        request.getRequestDispatcher("/login/failed").forward(request, response);
     }
 }

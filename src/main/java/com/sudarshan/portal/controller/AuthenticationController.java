@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.List;
 
@@ -23,75 +25,61 @@ import java.util.List;
 
 @Slf4j
 @Controller
-@RequestMapping("/login")
 public class AuthenticationController {
 
     @Autowired
     private AuthenticationService authenticationService;
 
-    @GetMapping()
+    @GetMapping("/login")
     public String loginPage(Model model) {
         log.debug("loginPage: Setting blank Phone Dto");
         model.addAttribute("phone", new PhoneDto());
         return "auth/login-page";
     }
 
-    @PostMapping("/gen")
-    public String genOtp(@ModelAttribute @Valid PhoneDto phone, BindingResult result, Model model) {
-        log.info("genOtp: generating otp");
-        if (result.hasErrors()) {
-            List<FieldError> fieldErrors = result.getFieldErrors();
-            var builder = new StringBuilder();
-            fieldErrors.forEach(fieldError -> builder.append(fieldError.getDefaultMessage()));
-            model.addAttribute("message", builder.toString());
-            return "status/error-page";
-        }
-        try {
-            phone = authenticationService.generateOtp(phone);
-            model.addAttribute("message", "OTP Sent to " + phone.getPhoneNumber());
-            return "status/success-page";
-        } catch (OtpException ex) {
-            model.addAttribute("message", ex.getLocalizedMessage());
-            return "status/error-page";
-        } catch (Exception ex) {
-            log.error(ex.getMessage());
-            model.addAttribute("message", "Something went wrong");
-            return "status/error-page";
-        }
+    @PostMapping("/login/failed")
+    public String handleFailedLogin(Model model, HttpServletRequest request, HttpServletResponse response) {
+        log.info("handleFailedLogin: Login failed");
+        model.addAttribute("phone", new PhoneDto(request.getParameter("phoneNumber")));
+        return "auth/login-page";
     }
 
-    @PostMapping("/phone")
+    @PostMapping("/login/phone")
     public String submitPhone(@ModelAttribute @Valid PhoneDto phone, BindingResult bindingResult, Model model) {
         log.info("submitPhone: Phone submission {}", phone);
         if (bindingResult.hasErrors()) {
             List<FieldError> fieldErrors = bindingResult.getFieldErrors();
             var builder = new StringBuilder();
             fieldErrors.forEach(fieldError -> builder.append(fieldError.getDefaultMessage()));
-            model.addAttribute("message", builder.toString());
-            return "status/error-page";
+            model.addAttribute("failed", builder.toString());
+            model.addAttribute("phone", new PhoneDto());
+            return "auth/login-page";
         }
         log.info("submitPhone: forwarding the request for {}", phone);
         model.addAttribute("phone", phone);
-        return "forward:/login/genotp";
+        return "forward:/genotp";
     }
 
     // forward request
     @PostMapping("/genotp")
     public String generateOtp(@ModelAttribute @Valid PhoneDto phone, Model model) {
-        log.info("generateOtp: {}", phone);
+        log.info("generateOtp forwarded: {}", phone);
         model.addAttribute("phone", phone);
 
         try {
             phone = authenticationService.generateOtp(phone);
-            model.addAttribute("message", "OTP Sent to " + phone.getPhoneNumber());
-            return "status/success-page";
+            model.addAttribute("success", "OTP Sent to " + phone.getPhoneNumber());
+            model.addAttribute("phone", phone);
+            return "auth/login-page";
         } catch (OtpException ex) {
-            model.addAttribute("message", ex.getLocalizedMessage());
-            return "status/error-page";
+            model.addAttribute("failed", ex.getLocalizedMessage());
+            model.addAttribute("phone", new PhoneDto());
+            return "auth/login-page";
         } catch (Exception ex) {
             log.error(ex.getMessage());
-            model.addAttribute("message", "Something went wrong");
-            return "status/error-page";
+            model.addAttribute("failed", "Something went wrong. Please try again.");
+            model.addAttribute("phone", new PhoneDto());
+            return "auth/login-page";
         }
     }
 }
