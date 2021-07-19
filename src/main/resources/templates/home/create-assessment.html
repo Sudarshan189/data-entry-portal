@@ -19,11 +19,13 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
         <div class="navbar-nav">
-            <a class="nav-item nav-link active" href="/user/my-assessments">Assessments</a>
-            <a class="nav-item nav-link" href="/user/new-assessment">New</a>
+            <a class="nav-item nav-link" href="/user/my-assessments">Assessments</a>
+            <a class="nav-item nav-link active" href="/user/new-assessment">New</a>
         </div>
     </div>
-    <a class="navbar-text" th:text="${session.username}" href="/logout"></a>
+    <span class="navbar-text" th:text="${session.username}"></span>
+    <span class="navbar-text">&nbsp;|&nbsp;&nbsp;</span>
+    <a class="navbar-text" href="/logout">Logout</a>
 </nav>
 
 <div class="jumbotron jumbotron-fluid">

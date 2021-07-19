@@ -1,5 +1,6 @@
 package com.sudarshan.portal.config;
 
+import com.sudarshan.portal.filter.CustomLoggingFilter;
 import com.sudarshan.portal.filter.CustomUsernamePasswordAuthFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -30,6 +31,7 @@ public class SecurityCustomConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.cors().and().csrf().disable()
+                .addFilterBefore(new CustomLoggingFilter(), CustomUsernamePasswordAuthFilter.class)
                 .addFilter(new CustomUsernamePasswordAuthFilter(this.authenticationManager()))
                 .authorizeRequests()
                 .antMatchers("/login/**").permitAll()

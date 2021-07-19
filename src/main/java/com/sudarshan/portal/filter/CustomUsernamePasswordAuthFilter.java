@@ -36,12 +36,12 @@ public class CustomUsernamePasswordAuthFilter extends UsernamePasswordAuthentica
         String userName = obtainUsername(request);
         String password = obtainPassword(request);
         if (userName!=null && password!=null) {
-            log.info("attemptAuthentication: attempting Login for {}", userName);
+            log.debug("Initiating OTP login for {}", userName);
             var authenticationToken = new UsernamePasswordAuthenticationToken(userName, password);
             setDetails(request, authenticationToken);
             return this.getAuthenticationManager().authenticate(authenticationToken);
         } else {
-            log.info("attemptAuthentication: Bad Creds {} {}",userName,password);
+            log.info("Invalid Inputs submitted {}", userName);
             throw new AuthenticationServiceException("Invalid OTP or PhoneNumber submitted");
         }
     }
@@ -66,14 +66,15 @@ public class CustomUsernamePasswordAuthFilter extends UsernamePasswordAuthentica
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
-        User user = (User) authResult.getPrincipal();
+        var user = (User) authResult.getPrincipal();
+        log.info("Login Successful {}", user);
         request.getSession().setAttribute("username", user.getUsername());
         super.successfulAuthentication(request, response, chain, authResult);
     }
 
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
-        log.info("Un Successful: {}", failed.getLocalizedMessage());
+        log.info("Login Failed {}", failed.getLocalizedMessage());
         request.setAttribute("failed", failed.getLocalizedMessage());
         request.getRequestDispatcher("/login/failed").forward(request, response);
     }

@@ -8,8 +8,12 @@ import java.util.Date;
  */
 public class DateUtils {
 
+    private DateUtils() {
+
+    }
+
     public static Date getExpiry(int minutes) {
-        Calendar calendar = Calendar.getInstance();
+        var calendar = Calendar.getInstance();
         calendar.setTime(new Date());
         calendar.add(Calendar.MINUTE, minutes);
         return calendar.getTime();

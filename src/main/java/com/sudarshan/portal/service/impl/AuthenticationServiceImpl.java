@@ -6,6 +6,7 @@ import com.sudarshan.portal.domain.model.User;
 import com.sudarshan.portal.domain.repository.UserRepository;
 import com.sudarshan.portal.exception.OtpException;
 import com.sudarshan.portal.service.AuthenticationService;
+import com.sudarshan.portal.utils.Constants;
 import com.sudarshan.portal.utils.DateUtils;
 import com.sudarshan.portal.utils.OtpGenerator;
 import lombok.extern.slf4j.Slf4j;
@@ -17,8 +18,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import javax.validation.Valid;
-import java.util.Date;
 import java.util.Optional;
 
 /**
@@ -37,37 +36,45 @@ public class AuthenticationServiceImpl implements AuthenticationService, UserDet
     @Value("${data.entry.application.admin}")
     private String adminPhoneNumber;
 
+    @Value("${data.entry.application.otp.expiry}")
+    private Integer otpExpiryTime;
+
+    @Autowired
+    private OtpGenerator otpGenerator;
+
     @Override
     public PhoneDto generateOtp(PhoneDto phoneDto) throws OtpException {
         User user;
-        String generatedOtp = OtpGenerator.generateOtp(6);
+        String generatedOtp = otpGenerator.generateOtp();
         phoneDto.setOtp(null);
-        log.info("Generated OTP is: {}", generatedOtp);
         Optional<User> userFromDb = userRepository.findById(phoneDto.getPhoneNumber());
         if (userFromDb.isPresent()) {
             user = userFromDb.get();
             if (user.otpExpiryTime()!=null && DateUtils.checkOtpIfExpired(user.otpExpiryTime())) {
-                log.info("generateOtp: otp not yet expired {}", user);
+                log.info("OTP not yet expired for {}", user);
                 throw new OtpException("Otp not yet expired. Please try after some time.");
             } else {
-                log.info("generateOtp: otp expired generated new one {}", user);
+                log.debug("Generated OTP is: {}", generatedOtp);
+                log.info("Generating new OTP as OTP already expired for {}", user);
                 user.otpGenerated(passwordEncoder.encode(generatedOtp));
-                user.otpExpiryTime(DateUtils.getExpiry(1));
+                user.otpExpiryTime(DateUtils.getExpiry(otpExpiryTime));
                 userRepository.save(user);
                 return phoneDto;
             }
         } else {
                 String role;
+                log.debug("Generated OTP is: {}", generatedOtp);
+                log.info("Generating new OTP for {}", phoneDto);
                 user = new User();
                 user.phoneNumber(phoneDto.getPhoneNumber());
                 user.otpGenerated(passwordEncoder.encode(generatedOtp));
-                user.otpExpiryTime(DateUtils.getExpiry(1));
+                user.otpExpiryTime(DateUtils.getExpiry(otpExpiryTime));
                 if (phoneDto.getPhoneNumber().equals(adminPhoneNumber)) {
-                    role = "ROLE_ADMIN";
+                    role = Constants.ROLE_ADMIN;
                 } else {
-                    role = "ROLE_USER";
+                    role = Constants.ROLE_USER;
                 }
-                Authority authority = new Authority(role);
+                var authority = new Authority(role);
                 authority.setUser(user);
                 user.addAuthority(authority);
                 userRepository.save(user);
@@ -77,13 +84,14 @@ public class AuthenticationServiceImpl implements AuthenticationService, UserDet
 
     @Override
     public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
-        log.info("loadUserByUsername: {}", s);
         Optional<User> user = userRepository.findById(s);
         if (user.isPresent()) {
-            User foundUser = user.get();
+            var foundUser = user.get();
             foundUser.setCredentialsNonExpired(foundUser.otpExpiryTime() != null && DateUtils.checkOtpIfExpired(foundUser.otpExpiryTime()));
+            log.debug("User found {}", foundUser);
             return foundUser;
         }
+        log.info("User not found {}", s);
         throw new UsernameNotFoundException("User not found");
     }
 }
